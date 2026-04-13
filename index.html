@@ -191,14 +191,17 @@
             };
 
             // ==========================================
-            // TARIK DATA DARI GOOGLE SHEETS
+            // TARIK DATA DARI GOOGLE SHEETS DENGAN "CACHE-BUSTER"
             // ==========================================
             const loadAllData = async () => {
                 setLoading(true);
                 setError(null);
                 try {
-                const idmeUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-KOkN92rvUsk8_sF-twkRLuyO7Nm639dxmKb0MP41X8NTzZB3YIZ2iPRuPGqn9L8mgGlEaVC1Plkr/pub?gid=0&single=true&output=csv';
-                const idmeResponse = await fetch(idmeUrl);
+                // Gunakan masa semasa untuk memaksa pelayar telefon memuat turun data paling baharu
+                const ts = new Date().getTime(); 
+
+                const idmeUrl = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-KOkN92rvUsk8_sF-twkRLuyO7Nm639dxmKb0MP41X8NTzZB3YIZ2iPRuPGqn9L8mgGlEaVC1Plkr/pub?gid=0&single=true&output=csv&t=${ts}`;
+                const idmeResponse = await fetch(idmeUrl, { cache: 'no-cache' });
                 if (!idmeResponse.ok) throw new Error('Ralat rangkaian semasa memuat turun data IDME.');
                 const idmeText = await idmeResponse.text();
                 
@@ -212,8 +215,8 @@
                 }
                 setRawData(parsedIdme.data);
 
-                const cloudUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-KOkN92rvUsk8_sF-twkRLuyO7Nm639dxmKb0MP41X8NTzZB3YIZ2iPRuPGqn9L8mgGlEaVC1Plkr/pub?gid=112202218&single=true&output=csv';
-                const cloudResponse = await fetch(cloudUrl);
+                const cloudUrl = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-KOkN92rvUsk8_sF-twkRLuyO7Nm639dxmKb0MP41X8NTzZB3YIZ2iPRuPGqn9L8mgGlEaVC1Plkr/pub?gid=112202218&single=true&output=csv&t=${ts}`;
+                const cloudResponse = await fetch(cloudUrl, { cache: 'no-cache' });
                 if (cloudResponse.ok) {
                     const cloudText = await cloudResponse.text();
                     if (!cloudText.trim().startsWith('<!DOCTYPE') && !cloudText.trim().startsWith('<html')) {
@@ -221,13 +224,13 @@
                         
                         const mappedCloudData = parsedCloud.data.map(row => ({
                             id: formatMalaysianIC(extractField(row, ['ID'], [0])),
-                            kp: formatMalaysianIC(extractField(row, ['PENGENALAN', 'KP', 'K/P'], [2])),
+                            kp: formatMalaysianIC(extractField(row, ['PENGENALAN', 'KP', 'K/P', 'NO. PENGENALAN'], [2])),
                             tingkatan: extractField(row, ['TINGKATAN', 'FORM'], [3]),
-                            nama: extractField(row, ['NAMA MURID', 'NAMA', 'NAME'], [1, 2]),
-                            kelas: extractField(row, ['NAMA KELAS', 'KELAS', 'CLASS'], [4, 5, 6, 7]),
-                            acara: extractField(row, ['ACARA', 'PERTANDINGAN', 'AKTIVITI'], [5, 6, 7, 8]),
-                            peringkat: extractField(row, ['PERINGKAT', 'TAHAP'], [6, 7, 8, 9]),
-                            pencapaian: extractField(row, ['PENCAPAIAN', 'KEDUDUKAN', 'KEPUTUSAN', 'PINGAT'], [7, 8, 9, 10]),
+                            nama: extractField(row, ['NAMA MURID', 'NAMA', 'NAME'], [1]),
+                            kelas: extractField(row, ['NAMA KELAS', 'KELAS', 'CLASS'], [4]),
+                            acara: extractField(row, ['ACARA', 'PERTANDINGAN', 'AKTIVITI'], [5]),
+                            peringkat: extractField(row, ['PERINGKAT', 'TAHAP'], [6]),
+                            pencapaian: extractField(row, ['PENCAPAIAN', 'KEDUDUKAN', 'KEPUTUSAN', 'PINGAT'], [7]),
                             sheetRow: row._sheetRow 
                         })).filter(r => r.nama && r.acara); 
                         
@@ -236,7 +239,7 @@
                 }
                 setLoading(false);
                 } catch (err) {
-                setError(err.message || "Gagal menyambung ke pangkalan data IDME.");
+                setError(err.message || "Gagal menyambung ke pangkalan data. Sila periksa capaian internet anda.");
                 setLoading(false);
                 }
             };

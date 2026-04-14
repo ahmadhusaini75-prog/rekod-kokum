@@ -326,7 +326,7 @@
                 <div class="min-h-screen pb-24">
                     <header class="fixed top-0 w-full z-50 glass-card border-none print:hidden">
                         <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-                            <div class="flex items-center gap-3 sm:gap-6 overflow-x-auto hide-scrollbar pr-4 pb-1 sm:pb-0">
+                            <div class="flex items-center gap-3 sm:gap-6 overflow-x-auto hide-scrollbar pr-6 sm:pr-4 pb-1 sm:pb-0 w-full sm:w-auto">
                                 <div class="w-12 h-12 sm:w-16 sm:h-16 bg-white rounded-full p-0.5 sm:p-1 shadow-[0_0_15px_rgba(255,255,255,0.2)] flex items-center justify-center overflow-hidden border border-white/20 shrink-0">
                                     <img src="https://i.postimg.cc/bY4pyb0M/LOGO-LIKAS.png" class="w-full h-full object-contain" alt="Logo" />
                                 </div>
@@ -339,12 +339,11 @@
                                     <div class="bg-gradient-to-r from-[#B8860B] via-[#FFD700] to-[#B8860B] px-4 sm:px-12 py-1 sm:py-1.5 rounded sm:rounded-md text-center shadow-[0_0_15px_rgba(255,215,0,0.3)]">
                                         <span class="text-[#002200] font-black italic text-[9px] sm:text-sm lg:text-lg tracking-[0.3em] sm:tracking-[0.5em] block leading-none">KOKURIKULUM</span>
                                     </div>
-                                    <span class="text-emerald-300 italic font-black text-[8px] sm:text-xs lg:text-sm text-center leading-tight mt-1.5 sm:mt-2 drop-shadow-lg whitespace-nowrap">
+                                    <span class="text-emerald-300 italic font-black text-[8px] sm:text-xs lg:text-sm text-center leading-tight mt-1.5 sm:mt-2 drop-shadow-lg whitespace-nowrap pr-2">
                                         Kokurikulum Dinamik, Murid Holistik
                                     </span>
                                 </div>
                             </div>
-                            {/* DITAMBAH: hidden sm:flex untuk menyembunyikan butang atas kanan ini pada skrin kecil (mobile) */}
                             <div class="hidden sm:flex gap-2 sm:gap-3 shrink-0 ml-2">
                                 <button onClick={loadAllData} class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl sm:rounded-2xl bg-white/10 text-white active:bg-brand-blue transition-all">
                                     <i class={`fas fa-sync-alt text-sm sm:text-lg ${loading ? 'fa-spin' : ''}`}></i>

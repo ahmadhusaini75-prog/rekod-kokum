@@ -326,7 +326,7 @@
                 <div class="min-h-screen pb-24">
                     <header class="fixed top-0 w-full z-50 glass-card border-none print:hidden">
                         <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-                            {/* Ditambah pr-12 pada wrapper skrin telefon dan pb-2 untuk memastikan margin yang secukupnya */}
+                            {/* Pemendekan kawasan kotak untuk mobile di sini */}
                             <div class="flex items-center gap-3 sm:gap-6 overflow-x-auto hide-scrollbar pr-12 sm:pr-4 pb-2 sm:pb-0 w-full sm:w-auto">
                                 <div class="w-12 h-12 sm:w-16 sm:h-16 bg-white rounded-full p-0.5 sm:p-1 shadow-[0_0_15px_rgba(255,255,255,0.2)] flex items-center justify-center overflow-hidden border border-white/20 shrink-0">
                                     <img src="https://i.postimg.cc/bY4pyb0M/LOGO-LIKAS.png" class="w-full h-full object-contain" alt="Logo" />
@@ -336,12 +336,12 @@
                                     <p class="neon-text-yellow text-[9px] sm:text-sm lg:text-base font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] mt-1 sm:mt-1.5">SMK LIKAS</p>
                                 </div>
                                 
-                                {/* Ditambah pr-6 pada bekas dan pr-8 pada perkataan "Holistik" supaya huruf tak terpotong */}
-                                <div class="ml-2 sm:ml-5 pl-3 sm:pl-6 pr-6 sm:pr-0 border-l-2 border-white/20 flex flex-col justify-center shrink-0">
-                                    <div class="bg-gradient-to-r from-[#B8860B] via-[#FFD700] to-[#B8860B] px-4 sm:px-12 py-1 sm:py-1.5 rounded sm:rounded-md text-center shadow-[0_0_15px_rgba(255,215,0,0.3)]">
-                                        <span class="text-[#002200] font-black italic text-[9px] sm:text-sm lg:text-lg tracking-[0.3em] sm:tracking-[0.5em] block leading-none">KOKURIKULUM</span>
+                                <div class="ml-2 sm:ml-5 pl-3 sm:pl-6 pr-4 sm:pr-0 border-l-2 border-white/20 flex flex-col justify-center shrink-0">
+                                    {/* Kurangkan padding x dan tracking di skrin kecil */}
+                                    <div class="bg-gradient-to-r from-[#B8860B] via-[#FFD700] to-[#B8860B] px-2.5 sm:px-12 py-1 sm:py-1.5 rounded sm:rounded-md text-center shadow-[0_0_15px_rgba(255,215,0,0.3)]">
+                                        <span class="text-[#002200] font-black italic text-[9px] sm:text-sm lg:text-lg tracking-widest sm:tracking-[0.5em] block leading-none">KOKURIKULUM</span>
                                     </div>
-                                    <span class="text-emerald-300 italic font-black text-[8px] sm:text-xs lg:text-sm text-center leading-tight mt-1.5 sm:mt-2 drop-shadow-lg whitespace-nowrap pr-8 sm:pr-2">
+                                    <span class="text-emerald-300 italic font-black text-[8px] sm:text-xs lg:text-sm text-center leading-tight mt-1.5 sm:mt-2 drop-shadow-lg whitespace-nowrap pr-4 sm:pr-2">
                                         Kokurikulum Dinamik, Murid Holistik
                                     </span>
                                 </div>

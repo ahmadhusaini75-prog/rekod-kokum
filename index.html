@@ -3,37 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem e-Pencapaian Kokurikulum</title>
+    <title>Sistem e-Pencapaian Kokurikulum - SMK Likas</title>
     
     <!-- Enjin Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Ikon FontAwesome (Pengganti Lucide) -->
+    <!-- Tetapan Tema Khas SMK LIKAS (Edisi Neon Dark 2026) -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-blue': '#1FA3D1',
+                        'brand-yellow': '#FFD400',
+                        'dark-bg': '#0f172a',
+                        'dark-card': 'rgba(30, 41, 59, 0.7)',
+                        'neon-glow': 'rgba(31, 163, 209, 0.3)'
+                    },
+                    borderRadius: {
+                        '3xl': '1.75rem',
+                        '4xl': '2.25rem',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Ikon FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Enjin React & ReactDOM -->
+    <!-- Google Fonts - Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <!-- Enjin Babel (Untuk menterjemah kod React JSX dalam pelayar web) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style type="text/css">
-        @media print {
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: white !important; }
-            .min-h-screen { min-height: auto !important; padding-bottom: 0 !important; }
-            .shadow-sm, .shadow-md { box-shadow: none !important; border: 1px solid #e2e8f0 !important; }
-            main { padding-top: 0 !important; margin-top: 0 !important; }
-            .print\:hidden { display: none !important; }
-            .print\:col-span-12 { grid-column: span 12 / span 12 !important; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            background-attachment: fixed;
+            color: #f1f5f9;
+            -webkit-tap-highlight-color: transparent;
         }
-        /* Scrollbar tersembunyi untuk tab */
+        @media print {
+            .print\:hidden { display: none !important; }
+            body { background: white !important; color: black !important; }
+            .glass-card { background: white !important; border: 1px solid #ccc !important; color: black !important; }
+        }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .neon-border-blue {
+            border: 1px solid rgba(31, 163, 209, 0.4);
+            box-shadow: 0 0 15px rgba(31, 163, 209, 0.1);
+        }
+
+        .neon-text-yellow {
+            color: #FFD400;
+            text-shadow: 0 0 10px rgba(255, 212, 0, 0.3);
+        }
+
+        .active-tab {
+            background: #1FA3D1;
+            box-shadow: 0 0 20px rgba(31, 163, 209, 0.4);
+            color: white !important;
+        }
+
+        input, select {
+            background: rgba(15, 23, 42, 0.5) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+        }
+
+        input:focus {
+            border-color: #1FA3D1 !important;
+            box-shadow: 0 0 0 4px rgba(31, 163, 209, 0.2) !important;
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #1FA3D1 0%, #0c4a6e 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:active {
+            transform: scale(0.98);
+        }
     </style>
 </head>
-<body>
-    <!-- Tapak Aplikasi React -->
+<body class="overflow-x-hidden">
     <div id="root"></div>
 
     <script type="text/babel">
@@ -47,7 +113,6 @@
             const [error, setError] = useState(null);
             const [searchQuery, setSearchQuery] = useState('');
             const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-            const [selectedStudent, setSelectedStudent] = useState(null);
             const dropdownRef = useRef(null);
             
             const [activeTab, setActiveTab] = useState('form');
@@ -60,286 +125,165 @@
             const [formData, setFormData] = useState(initialFormState);
             const [notification, setNotification] = useState(null);
 
-            // ==========================================
-            // FUNGSI PARSE CSV & EKSTRAK DATA
-            // ==========================================
             const parseCSV = (text) => {
                 const cleanText = text.replace(/^\uFEFF/, ''); 
                 const result = [];
                 let row = [];
                 let col = '';
                 let inQuotes = false;
-
                 for (let i = 0; i < cleanText.length; i++) {
-                let char = cleanText[i];
-                let nextChar = cleanText[i + 1];
-
-                if (char === '"') {
-                    if (inQuotes && nextChar === '"') {
-                    col += '"';
-                    i++; 
-                    } else {
-                    inQuotes = !inQuotes;
-                    }
-                } else if (char === ',' && !inQuotes) {
-                    row.push(col);
-                    col = '';
-                } else if ((char === '\n' || char === '\r') && !inQuotes) {
-                    if (char === '\r' && nextChar === '\n') i++; 
-                    row.push(col);
-                    result.push(row);
-                    row = [];
-                    col = '';
-                } else {
-                    col += char;
+                    let char = cleanText[i];
+                    let nextChar = cleanText[i + 1];
+                    if (char === '"') {
+                        if (inQuotes && nextChar === '"') { col += '"'; i++; } else { inQuotes = !inQuotes; }
+                    } else if (char === ',' && !inQuotes) {
+                        row.push(col); col = '';
+                    } else if ((char === '\n' || char === '\r') && !inQuotes) {
+                        if (char === '\r' && nextChar === '\n') i++; 
+                        row.push(col); result.push(row); row = []; col = '';
+                    } else { col += char; }
                 }
-                }
-                if (col !== '' || cleanText[cleanText.length - 1] === ',') {
-                row.push(col);
-                }
+                if (col !== '' || cleanText[cleanText.length - 1] === ',') row.push(col);
                 if (row.length > 0) result.push(row);
-
                 if (result.length === 0) return { data: [] };
-
                 let headerIdx = 0;
-                let maxCols = 0;
                 for (let i = 0; i < Math.min(30, result.length); i++) {
-                const r = result[i];
-                const hasNama = r.some(c => String(c).toUpperCase().includes('NAMA') || String(c).toUpperCase().includes('NAME') || String(c).toUpperCase().includes('ACARA'));
-                if (hasNama) {
-                    headerIdx = i;
-                    break;
+                    if (result[i].some(c => String(c).toUpperCase().includes('NAMA'))) { headerIdx = i; break; }
                 }
-                if (r.length > maxCols) {
-                    maxCols = r.length;
-                    headerIdx = i;
-                }
-                }
-
                 const headers = result[headerIdx] ? result[headerIdx].map(h => String(h).trim().toUpperCase()) : [];
                 const data = [];
-
                 for (let i = headerIdx + 1; i < result.length; i++) {
-                const rowArr = result[i];
-                if (rowArr.join('').trim() === '') continue; 
-
-                const obj = {};
-                for (let j = 0; j < Math.max(headers.length, rowArr.length); j++) {
-                    const headerVal = headers[j] || `KOLUM_${j + 1}`;
-                    const val = rowArr[j] ? String(rowArr[j]).trim() : '';
-
-                    if (headerVal !== '') obj[headerVal] = val;
-                    obj[`_idx_${j}`] = val; 
-                }
-                obj._sheetRow = i + 1; 
-                data.push(obj);
+                    if (result[i].join('').trim() === '') continue; 
+                    const obj = {};
+                    for (let j = 0; j < Math.max(headers.length, result[i].length); j++) {
+                        const h = headers[j] || `KOL_${j + 1}`;
+                        const v = result[i][j] ? String(result[i][j]).trim() : '';
+                        obj[h] = v;
+                        obj[`_idx_${j}`] = v;
+                    }
+                    obj._sheetRow = i + 1; 
+                    data.push(obj);
                 }
                 return { data };
+            };
+
+            const formatIC = (value) => {
+                if (!value) return '';
+                let strVal = String(value).replace(/^'/, '').replace(/^="?([^"]+)"?$/, '$1');
+                let digits = strVal.replace(/\D/g, '');
+                if (digits.length < 8 && !/^\d+$/.test(strVal)) return ''; 
+                return digits.length >= 8 && digits.length < 12 ? digits.padStart(12, '0') : (digits.length === 12 ? digits : strVal.trim());
             };
 
             const extractField = (row, keywords, fallbackIndices) => {
                 const keys = Object.keys(row).filter(k => !k.startsWith('_idx_'));
                 for (let kw of keywords) {
-                const exactKey = keys.find(k => k.trim().toUpperCase() === kw.toUpperCase());
-                if (exactKey && row[exactKey]) return row[exactKey];
+                    const exactKey = keys.find(k => k.trim().toUpperCase() === kw.toUpperCase());
+                    if (exactKey && row[exactKey]) return row[exactKey];
                 }
                 for (let kw of keywords) {
-                const matchedKey = keys.find(k => k.toUpperCase().includes(kw));
-                if (matchedKey && row[matchedKey]) return row[matchedKey];
+                    const matchedKey = keys.find(k => k.toUpperCase().includes(kw.toUpperCase()));
+                    if (matchedKey && row[matchedKey]) return row[matchedKey];
                 }
                 for (let idx of fallbackIndices) {
-                if (row[`_idx_${idx}`]) return row[`_idx_${idx}`];
+                    if (row[`_idx_${idx}`]) return row[`_idx_${idx}`];
                 }
                 return '';
             };
 
-            const formatMalaysianIC = (value) => {
-                if (!value) return '';
-                let strVal = String(value);
-                strVal = strVal.replace(/^'/, '').replace(/^="?([^"]+)"?$/, '$1');
-                let alphaNumeric = strVal.replace(/[^a-zA-Z0-9]/g, '');
-
-                if (/^\d+$/.test(alphaNumeric)) {
-                    let digits = alphaNumeric;
-                    if (digits.length >= 8 && digits.length < 12) {
-                        return digits.padStart(12, '0');
-                    } 
-                    else if (digits.length === 12) {
-                        return digits;
-                    }
-                }
-                return strVal.trim();
-            };
-
             const extractStudentData = (row) => {
-                let nama = extractField(row, ['NAMA MURID', 'NAMA', 'NAME'], [1, 2]);
-                if (!nama) {
-                const allVals = Object.keys(row).filter(k => !k.startsWith('_idx_') && !k.startsWith('_sheetRow')).map(k => row[k]);
-                nama = allVals.sort((a,b) => b.length - a.length)[0] || 'NAMA TIDAK JELAS';
-                }
-                
-                let rawId = extractField(row, ['ID MURID', 'ID', 'KOD'], [0, 1]);
-                let rawKp = extractField(row, ['NO. KAD PENGENALAN', 'NO. KP', 'NO KP', 'NO. K/P', 'NO K/P', 'NO. PENGENALAN', 'KP', 'PENGENALAN', 'IC', 'NOKP', 'KAD PENGENALAN'], [2, 3]);
+                const nama = extractField(row, ['NAMA MURID', 'NAMA', 'NAME'], [1]);
+                const kp = extractField(row, ['NO. PENGENALAN', 'NO. KP', 'NO. KAD PENGENALAN', 'KP', 'IC'], [2]);
+                const id = extractField(row, ['ID MURID', 'ID', 'KOD'], [0]);
+                const ting = extractField(row, ['TINGKATAN', 'FORM', 'TING'], [3]);
+                const kelas = extractField(row, ['NAMA KELAS', 'KELAS', 'CLASS'], [4]);
 
                 return {
-                nama: nama,
-                id: formatMalaysianIC(rawId),
-                kp: formatMalaysianIC(rawKp),
-                tingkatan: extractField(row, ['TINGKATAN', 'FORM', 'TAHUN', 'DARJAH'], [3, 4, 5]),
-                kelas: extractField(row, ['NAMA KELAS', 'KELAS', 'CLASS'], [4, 5, 6, 7])
+                    nama: nama || 'PELAJAR',
+                    id: formatIC(id),
+                    kp: formatIC(kp),
+                    tingkatan: ting,
+                    kelas: kelas
                 };
             };
 
-            // ==========================================
-            // TARIK DATA DARI GOOGLE SHEETS DENGAN "CACHE-BUSTER"
-            // ==========================================
             const loadAllData = async () => {
                 setLoading(true);
-                setError(null);
                 try {
-                // Gunakan masa semasa untuk memaksa pelayar telefon memuat turun data paling baharu
-                const ts = new Date().getTime(); 
+                    const ts = new Date().getTime(); 
+                    const idmeUrl = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-KOkN92rvUsk8_sF-twkRLuyO7Nm639dxmKb0MP41X8NTzZB3YIZ2iPRuPGqn9L8mgGlEaVC1Plkr/pub?gid=0&single=true&output=csv&t=${ts}`;
+                    const cloudUrl = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-KOkN92rvUsk8_sF-twkRLuyO7Nm639dxmKb0MP41X8NTzZB3YIZ2iPRuPGqn9L8mgGlEaVC1Plkr/pub?gid=112202218&single=true&output=csv&t=${ts}`;
+                    
+                    const [res1, res2] = await Promise.all([
+                        fetch(idmeUrl, {cache: 'no-cache'}), 
+                        fetch(cloudUrl, {cache: 'no-cache'})
+                    ]);
+                    
+                    const txt1 = await res1.text();
+                    setRawData(parseCSV(txt1).data);
 
-                const idmeUrl = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-KOkN92rvUsk8_sF-twkRLuyO7Nm639dxmKb0MP41X8NTzZB3YIZ2iPRuPGqn9L8mgGlEaVC1Plkr/pub?gid=0&single=true&output=csv&t=${ts}`;
-                const idmeResponse = await fetch(idmeUrl, { cache: 'no-cache' });
-                if (!idmeResponse.ok) throw new Error('Ralat rangkaian semasa memuat turun data IDME.');
-                const idmeText = await idmeResponse.text();
-                
-                if (idmeText.trim().startsWith('<!DOCTYPE') || idmeText.trim().startsWith('<html')) {
-                    throw new Error("Format ditarik adalah HTML, bukan CSV. Pastikan Publish as CSV.");
-                }
-
-                const parsedIdme = parseCSV(idmeText);
-                if (parsedIdme.data.length === 0) {
-                    throw new Error("Data ditarik kosong. Sila semak Sheet anda.");
-                }
-                setRawData(parsedIdme.data);
-
-                const cloudUrl = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-KOkN92rvUsk8_sF-twkRLuyO7Nm639dxmKb0MP41X8NTzZB3YIZ2iPRuPGqn9L8mgGlEaVC1Plkr/pub?gid=112202218&single=true&output=csv&t=${ts}`;
-                const cloudResponse = await fetch(cloudUrl, { cache: 'no-cache' });
-                if (cloudResponse.ok) {
-                    const cloudText = await cloudResponse.text();
-                    if (!cloudText.trim().startsWith('<!DOCTYPE') && !cloudText.trim().startsWith('<html')) {
-                        const parsedCloud = parseCSV(cloudText);
-                        
-                        const mappedCloudData = parsedCloud.data.map(row => ({
-                            id: formatMalaysianIC(extractField(row, ['ID'], [0])),
-                            kp: formatMalaysianIC(extractField(row, ['PENGENALAN', 'KP', 'K/P', 'NO. PENGENALAN'], [2])),
-                            tingkatan: extractField(row, ['TINGKATAN', 'FORM'], [3]),
-                            nama: extractField(row, ['NAMA MURID', 'NAMA', 'NAME'], [1]),
-                            kelas: extractField(row, ['NAMA KELAS', 'KELAS', 'CLASS'], [4]),
-                            acara: extractField(row, ['ACARA', 'PERTANDINGAN', 'AKTIVITI'], [5]),
-                            peringkat: extractField(row, ['PERINGKAT', 'TAHAP'], [6]),
-                            pencapaian: extractField(row, ['PENCAPAIAN', 'KEDUDUKAN', 'KEPUTUSAN', 'PINGAT'], [7]),
-                            sheetRow: row._sheetRow 
-                        })).filter(r => r.nama && r.acara); 
-                        
-                        setCloudRecords(mappedCloudData);
+                    const txt2 = await res2.text();
+                    if (!txt2.includes('<!DOCTYPE')) {
+                        const p2 = parseCSV(txt2).data;
+                        const mapped = p2.map(row => {
+                            return {
+                                id: formatIC(row['ID'] || row['_idx_0']),
+                                nama: row['NAMA MURID'] || row['NAMA'] || row['_idx_1'],
+                                kp: formatIC(row['NO. PENGENALAN'] || row['PENGENALAN'] || row['NO. KP'] || row['_idx_2']),
+                                tingkatan: row['TINGKATAN'] || row['_idx_3'],
+                                kelas: row['NAMA KELAS'] || row['KELAS'] || row['_idx_4'],
+                                acara: row['ACARA'] || row['_idx_5'],
+                                peringkat: row['PERINGKAT'] || row['_idx_6'],
+                                pencapaian: row['PENCAPAIAN'] || row['_idx_7'],
+                                sheetRow: row._sheetRow 
+                            };
+                        }).filter(r => r.nama && r.acara);
+                        setCloudRecords(mapped);
                     }
-                }
-                setLoading(false);
-                } catch (err) {
-                setError(err.message || "Gagal menyambung ke pangkalan data. Sila periksa capaian internet anda.");
-                setLoading(false);
-                }
+                    setLoading(false);
+                } catch (err) { setError("Gagal muat data."); setLoading(false); }
             };
 
-            useEffect(() => {
-                loadAllData();
-            }, []);
+            useEffect(() => { loadAllData(); }, []);
 
-            useEffect(() => {
-                const handleClickOutside = (event) => {
-                if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                    setIsDropdownOpen(false);
-                }
-                };
-                document.addEventListener('mousedown', handleClickOutside);
-                return () => document.removeEventListener('mousedown', handleClickOutside);
-            }, []);
-
-            // ==========================================
-            // CARIAN & BORANG
-            // ==========================================
             const filteredStudents = useMemo(() => {
-                if (!searchQuery || searchQuery.trim() === '') return [];
-                const lowerQuery = searchQuery.toLowerCase().trim();
-                
-                return rawData.filter(row => {
-                    const allTextData = Object.values(row).join(' ').toLowerCase();
-                    let isMatch = allTextData.includes(lowerQuery);
-                    if (!isMatch && lowerQuery.startsWith('0')) {
-                        const queryWithoutZero = lowerQuery.substring(1);
-                        isMatch = allTextData.includes(queryWithoutZero);
-                    }
-                    return isMatch;
-                }).slice(0, 15);
+                if (!searchQuery.trim()) return [];
+                const q = searchQuery.toLowerCase();
+                return rawData.filter(r => Object.values(r).join(' ').toLowerCase().includes(q)).slice(0, 8);
             }, [searchQuery, rawData]);
 
-            const handleSelectStudent = (row) => {
-                const sData = extractStudentData(row);
-                setFormData({
-                    ...formData,
-                    id: sData.id,
-                    nama: sData.nama,
-                    kp: sData.kp,
-                    tingkatan: sData.tingkatan,
-                    kelas: sData.kelas
-                });
-                setSearchQuery(sData.nama);
-                setSelectedStudent(row);
+            const handleSelect = (r) => {
+                const s = extractStudentData(r);
+                setFormData({...formData, ...s});
+                setSearchQuery(s.nama);
                 setIsDropdownOpen(false);
             };
 
-            const handleChange = (e) => {
-                const { name, value } = e.target;
-                setFormData(prev => ({ ...prev, [name]: value }));
+            const handleSave = async (e) => {
+                e.preventDefault();
+                setIsSaving(true);
+                const URL = "https://script.google.com/macros/s/AKfycbx063mNTJfQGzNznudOcXqit1Ky50ozHppHkcleVGx1LuLZ2O2R9prs5ZvhxCi71DgC5A/exec";
+                try {
+                    const formatted = { ...formData, id: formData.id ? `'${formData.id}` : '', kp: formData.kp ? `'${formData.kp}` : '' };
+                    const payload = editingRow ? { action: 'update', sheetRow: editingRow, data: formatted } : { action: 'append', data: formatted };
+                    const res = await fetch(URL, { method: 'POST', body: JSON.stringify(payload) });
+                    const result = await res.json();
+                    if (result.result === 'success') {
+                        setNotification({ type: 'success', msg: "Data berjaya diproses!" });
+                        setFormData(initialFormState); setSearchQuery(''); setEditingRow(null);
+                        loadAllData();
+                    }
+                } catch (err) { setNotification({ type: 'error', msg: "Ralat semasa menyimpan data." }); }
+                finally { setIsSaving(false); setTimeout(() => setNotification(null), 3000); }
             };
 
-            const handleSaveAndSync = async (e) => {
-                e.preventDefault();
-                if (!formData.nama || !formData.acara || !formData.peringkat || !formData.pencapaian) {
-                showNotification("Sila lengkapkan butiran yang diwajibkan (*)", "error");
-                return;
-                }
-
-                setIsSaving(true);
-                const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx063mNTJfQGzNznudOcXqit1Ky50ozHppHkcleVGx1LuLZ2O2R9prs5ZvhxCi71DgC5A/exec";
-
-                try {
-                const formattedData = {
-                    ...formData,
-                    id: formData.id ? `'${formData.id}` : '',
-                    kp: formData.kp ? `'${formData.kp}` : ''
-                };
-
-                const payloadToSync = editingRow 
-                    ? { action: 'update', sheetRow: editingRow, data: formattedData } 
-                    : { action: 'append', data: formattedData };
-
-                const response = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payloadToSync)
-                });
-                
-                const result = await response.json();
-                
-                if (result.result === 'success') {
-                    showNotification(`Rekod berjaya ${editingRow ? 'dikemaskini' : 'disimpan'} ke Google Sheet!`, "success");
-                    setFormData(initialFormState);
-                    setSearchQuery('');
-                    setSelectedStudent(null);
-                    setEditingRow(null);
-                    setTimeout(loadAllData, 1500); 
-                } else {
-                    throw new Error(result.message);
-                }
-                } catch (err) {
-                showNotification("Gagal menghubungi pangkalan awan. Sila cuba lagi.", "error");
-                } finally {
-                setIsSaving(false);
-                }
+            const handleExport = () => {
+                if (!cloudRecords.length) return;
+                const headers = ['ID','NAMA MURID','NO. PENGENALAN','TINGKATAN','NAMA KELAS','ACARA','PERINGKAT','PENCAPAIAN'];
+                const csv = [headers.join(','), ...cloudRecords.map(r => [`"=""${r.id}"""`,`"${r.nama}"`,`"=""${r.kp}"""`,`"${r.tingkatan}"`,`"${r.kelas}"`,`"${r.acara}"`,`"${r.peringkat}"`,`"${r.pencapaian}"`].join(','))].join('\n');
+                const blob = new Blob([csv], {type:'text/csv'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = 'Rekod_Pencapaian_SMKLikas.csv'; a.click();
             };
 
             const handleEditClick = (record) => {
@@ -349,571 +293,304 @@
                     kp: record.kp || '',
                     tingkatan: record.tingkatan || '',
                     kelas: record.kelas || '',
-                    acara: record.acara || '',
-                    peringkat: record.peringkat || '',
-                    pencapaian: record.pencapaian || ''
+                    acara: (record.acara || '').toUpperCase(),
+                    peringkat: (record.peringkat || '').toUpperCase(),
+                    pencapaian: (record.pencapaian || '').toUpperCase()
                 });
                 setEditingRow(record.sheetRow);
                 setActiveTab('form');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             };
 
-            const showNotification = (msg, type) => {
-                setNotification({ msg, type });
-                setTimeout(() => setNotification(null), 3000);
-            };
-
-            const displayRecords = useMemo(() => {
-                return [...cloudRecords].reverse();
+            const stats = useMemo(() => {
+                if (!cloudRecords.length) return null;
+                const pC = {}, aC = {}, mC = {};
+                cloudRecords.forEach(r => {
+                    const pKey = (r.peringkat || '').toUpperCase();
+                    const aKey = (r.acara || '').toUpperCase();
+                    pC[pKey] = (pC[pKey] || 0) + 1;
+                    aC[aKey] = (aC[aKey] || 0) + 1;
+                    const key = `${r.nama} (${r.kelas})`; mC[key] = (mC[key] || 0) + 1;
+                });
+                return {
+                    total: cloudRecords.length,
+                    acara: Object.keys(aC).length,
+                    peringkat: Object.entries(pC).sort((a,b) => b[1]-a[1]),
+                    topStudents: Object.entries(mC).sort((a,b) => b[1]-a[1]).slice(0, 5)
+                };
             }, [cloudRecords]);
 
-            const handleExport = () => {
-                if (displayRecords.length === 0) {
-                showNotification("Tiada data untuk dieksport", "error");
-                return;
-                }
-
-                const headers = ['ID', 'NAMA', 'NO. PENGENALAN', 'TINGKATAN', 'NAMA KELAS', 'ACARA', 'PERINGKAT', 'PENCAPAIAN'];
-                const csvContent = [
-                headers.join(','),
-                ...displayRecords.map(r => [
-                    `"=""${r.id || ''}"""`,
-                    `"${r.nama || ''}"`,
-                    `"=""${r.kp || ''}"""`,
-                    `"${r.tingkatan || ''}"`,
-                    `"${r.kelas || ''}"`,
-                    `"${r.acara || ''}"`,
-                    `"${r.peringkat || ''}"`,
-                    `"${r.pencapaian || ''}"`
-                ].join(','))
-                ].join('\n');
-
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.setAttribute('href', url);
-                link.setAttribute('download', 'Semua_Data_Kokurikulum.csv');
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            };
-
-            const handlePrint = () => {
-                window.print();
-            };
-
-            const analysisStats = useMemo(() => {
-                if (displayRecords.length === 0) return null;
-
-                const peringkatCount = {};
-                const pencapaianCount = {};
-                const acaraCount = {};
-                const muridCount = {};
-
-                displayRecords.forEach(r => {
-                if(r.peringkat) peringkatCount[r.peringkat] = (peringkatCount[r.peringkat] || 0) + 1;
-                if(r.pencapaian) pencapaianCount[r.pencapaian] = (pencapaianCount[r.pencapaian] || 0) + 1;
-                if(r.acara) acaraCount[r.acara] = (acaraCount[r.acara] || 0) + 1;
-                
-                if(r.nama) {
-                    const namaUnik = `${r.nama} (${r.kelas || 'Tiada Kelas'})`;
-                    muridCount[namaUnik] = (muridCount[namaUnik] || 0) + 1;
-                }
-                });
-
-                return {
-                totalRecords: displayRecords.length,
-                totalAcara: Object.keys(acaraCount).length,
-                sortedPeringkat: Object.entries(peringkatCount).sort((a, b) => b[1] - a[1]),
-                sortedPencapaian: Object.entries(pencapaianCount).sort((a, b) => b[1] - a[1]),
-                sortedAcara: Object.entries(acaraCount).sort((a, b) => b[1] - a[1]).slice(0, 5),
-                sortedMurid: Object.entries(muridCount).sort((a, b) => b[1] - a[1]).slice(0, 10)
-                };
-            }, [displayRecords]);
+            const displayRecords = useMemo(() => [...cloudRecords].reverse(), [cloudRecords]);
 
             return (
-                <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-12">
-                {/* Header */}
-                <header className="bg-blue-700 text-white shadow-md relative z-20 print:hidden">
-                    <div className="max-w-7xl mx-auto px-4 py-4 sm:py-5 sm:px-6 lg:px-8 flex items-center justify-between">
-                    <div className="flex items-center space-x-3 sm:space-x-4">
-                        <img src="https://i.postimg.cc/fRVRSydZ/500-PX.png" alt="Logo SMK Kolombong" className="h-10 sm:h-14 w-auto object-contain" />
-                        <div className="flex flex-col">
-                            <h1 className="text-lg sm:text-2xl font-bold tracking-tight leading-tight">Sistem e-Pencapaian</h1>
-                            <span className="text-xs sm:text-sm text-blue-200 font-medium tracking-wide mt-0.5">SMK KOLOMBONG</span>
-                        </div>
-                    </div>
-                    </div>
-                </header>
-
-                {/* Main Content */}
-                <main className="max-w-7xl mx-auto px-4 py-6 sm:py-8 sm:px-6 lg:px-8 relative z-10">
-                    
-                    {/* Status Alerts */}
-                    {loading && (
-                    <div className="mb-6 p-4 bg-blue-50 text-blue-700 rounded-lg flex items-center border border-blue-200 text-sm sm:text-base">
-                        <i className="fas fa-spinner fa-spin text-lg sm:text-xl mr-3"></i>
-                        Memuat turun & menyegerakkan data...
-                    </div>
-                    )}
-                    {error && (
-                    <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg flex items-start sm:items-center border border-red-200 shadow-sm">
-                        <i className="fas fa-exclamation-circle text-xl sm:text-2xl mr-3 mt-0.5 sm:mt-0 flex-shrink-0"></i>
-                        <div>
-                            <h3 className="font-semibold text-sm sm:text-base">Masalah Tarikan Data</h3>
-                            <p className="text-xs sm:text-sm mt-1">{error}</p>
-                        </div>
-                    </div>
-                    )}
-                    {notification && (
-                    <div className={`mb-6 p-4 rounded-lg flex items-center border transition-all duration-300 shadow-sm text-sm sm:text-base ${notification.type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                        {notification.type === 'success' ? <i className="fas fa-check-circle text-lg mr-2 flex-shrink-0"></i> : <i className="fas fa-exclamation-circle text-lg mr-2 flex-shrink-0"></i>}
-                        {notification.msg}
-                    </div>
-                    )}
-
-                    {/* TAB NAVIGASI */}
-                    <div className="mb-6 border-b border-slate-200 flex space-x-2 sm:space-x-6 overflow-x-auto hide-scrollbar print:hidden">
-                        <button
-                        onClick={() => setActiveTab('form')}
-                        className={`whitespace-nowrap pb-3 sm:pb-4 px-3 sm:px-2 font-semibold text-sm border-b-2 transition-all flex items-center ${activeTab === 'form' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}
-                        >
-                        <i className="fas fa-file-excel text-base sm:text-lg mr-2"></i>
-                        Borang & Senarai
-                        </button>
-                        <button
-                        onClick={() => setActiveTab('analysis')}
-                        className={`whitespace-nowrap pb-3 sm:pb-4 px-3 sm:px-2 font-semibold text-sm border-b-2 transition-all flex items-center ${activeTab === 'analysis' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}
-                        >
-                        <i className="fas fa-chart-bar text-base sm:text-lg mr-2"></i>
-                        Analisis Pencapaian
-                        </button>
-                    </div>
-
-                    {/* PANDANGAN 1: BORANG & SENARAI REKOD */}
-                    {activeTab === 'form' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
-                        {/* Left Column - Form */}
-                        <div className="lg:col-span-4 space-y-6 print:hidden">
-                        
-                        {/* Carian Card */}
-                        <div className={`bg-white rounded-xl shadow-sm border ${editingRow ? 'border-yellow-400 ring-2 ring-yellow-200' : 'border-slate-200'} overflow-visible relative z-50 transition-all`}>
-                            <div className={`${editingRow ? 'bg-yellow-50 text-yellow-800' : 'bg-slate-100 text-slate-700'} px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-200 font-semibold flex flex-wrap items-center justify-between gap-2`}>
-                            <div className="flex items-center text-sm sm:text-base">
-                                <i className="fas fa-search text-base sm:text-lg mr-2"></i>
-                                {editingRow ? 'Mod Kemaskini Aktif' : 'Carian Murid (IDME)'}
+                <div class="min-h-screen pb-24">
+                    {/* Responsive Header */}
+                    <header class="fixed top-0 w-full z-50 glass-card border-none print:hidden">
+                        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+                            <div class="flex items-center gap-3 sm:gap-4">
+                                <div class="w-10 h-10 sm:w-14 sm:h-14 bg-white rounded-full p-0.5 sm:p-1 shadow-[0_0_15px_rgba(255,255,255,0.2)] flex items-center justify-center overflow-hidden border border-white/20">
+                                    <img src="https://i.postimg.cc/bY4pyb0M/LOGO-LIKAS.png" class="w-full h-full object-contain" alt="Logo" />
+                                </div>
+                                <div>
+                                    <h1 class="text-white font-extrabold text-sm sm:text-xl tracking-tight leading-none uppercase">e-Pencapaian</h1>
+                                    <p class="neon-text-yellow text-[8px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] mt-1">SMK LIKAS</p>
+                                </div>
                             </div>
-                            {!loading && !error && !editingRow && (
-                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-bold border border-green-200 shadow-sm whitespace-nowrap">
-                                    {rawData.length} murid
-                                </span>
-                            )}
+                            <div class="flex gap-2 sm:gap-3">
+                                <button onClick={loadAllData} class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl sm:rounded-2xl bg-white/10 text-white active:bg-brand-blue transition-all">
+                                    <i class={`fas fa-sync-alt text-sm sm:text-base ${loading ? 'fa-spin' : ''}`}></i>
+                                </button>
                             </div>
-                            
-                            {!editingRow && (
-                            <div className="p-4 sm:p-5" ref={dropdownRef}>
-                                <div className="relative">
-                                <input
-                                    type="text"
-                                    className="w-full pl-10 pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all disabled:opacity-50 text-sm sm:text-base"
-                                    placeholder={rawData.length > 0 ? "Nama / ID / KP..." : "Tiada data dimuat..."}
-                                    value={searchQuery}
-                                    onChange={(e) => {
-                                    setSearchQuery(e.target.value);
-                                    setIsDropdownOpen(true);
-                                    }}
-                                    onFocus={() => setIsDropdownOpen(true)}
-                                    disabled={loading || rawData.length === 0}
-                                />
-                                <i className="fas fa-search absolute left-3 top-3 sm:top-3.5 text-base sm:text-lg text-slate-400"></i>
-                                
-                                {/* Dropdown Results */}
-                                {isDropdownOpen && filteredStudents.length > 0 && (
-                                    <div className="absolute z-[100] mt-1 sm:mt-2 w-full bg-white shadow-2xl max-h-60 sm:max-h-72 rounded-md py-1 text-sm sm:text-base ring-1 ring-black ring-opacity-10 overflow-auto">
-                                    {filteredStudents.map((student, i) => {
-                                        const sData = extractStudentData(student);
-                                        return (
-                                            <div
-                                                key={i}
-                                                className="cursor-pointer select-none relative py-2.5 sm:py-3 pl-3 sm:pl-4 pr-3 sm:pr-4 hover:bg-blue-50 border-b border-slate-100 last:border-0"
-                                                onClick={() => handleSelectStudent(student)}
-                                            >
-                                                <div className="font-bold text-slate-800 uppercase block truncate text-sm sm:text-base">
-                                                    {sData.nama}
+                        </div>
+                    </header>
+
+                    <main class="max-w-7xl mx-auto px-4 pt-24 sm:pt-28">
+                        {/* Tab Switcher - Mobile Optimized */}
+                        <div class="flex justify-center mb-6 sm:mb-10 print:hidden">
+                            <div class="bg-slate-900/50 p-1 rounded-3xl flex gap-1 w-full max-w-sm border border-white/10">
+                                <button onClick={() => setActiveTab('form')} class={`flex-1 py-2.5 sm:py-3 rounded-[1.5rem] text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 ${activeTab === 'form' ? 'active-tab' : 'text-slate-400 hover:text-white'}`}>
+                                    <i class="fas fa-edit"></i> <span class="hidden sm:inline">BORANG</span><span class="sm:hidden">BORANG</span>
+                                </button>
+                                <button onClick={() => setActiveTab('analysis')} class={`flex-1 py-2.5 sm:py-3 rounded-[1.5rem] text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 ${activeTab === 'analysis' ? 'active-tab' : 'text-slate-400 hover:text-white'}`}>
+                                    <i class="fas fa-chart-line"></i> <span class="hidden sm:inline">STATISTIK</span><span class="sm:hidden">DATA</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {notification && (
+                            <div class="fixed top-20 left-4 right-4 sm:left-1/2 sm:-translate-x-1/2 sm:w-auto z-[100] px-6 py-4 rounded-2xl shadow-2xl glass-card border-brand-blue/30 text-white text-center animate-in zoom-in-95 duration-300">
+                                <div class="flex items-center justify-center gap-3">
+                                    <i class={`fas ${notification.type === 'success' ? 'fa-check-circle text-emerald-400' : 'fa-exclamation-circle text-red-400'} text-lg`}></i>
+                                    <span class="font-bold text-sm">{notification.msg}</span>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'form' && (
+                            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
+                                {/* Form Column */}
+                                <div class="lg:col-span-4 space-y-6 print:hidden">
+                                    <div class="glass-card rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 neon-border-blue relative overflow-hidden">
+                                        <div class="absolute -top-10 -right-10 w-32 h-32 bg-brand-blue/10 rounded-full blur-3xl"></div>
+                                        <h2 class="text-lg sm:text-xl font-black text-white mb-6 sm:mb-8 flex items-center gap-3">
+                                            <i class={`fas ${editingRow ? 'fa-pen-nib text-brand-yellow' : 'fa-plus-circle text-brand-blue'}`}></i>
+                                            {editingRow ? 'Kemaskini' : 'Kemasukan Data'}
+                                        </h2>
+
+                                        {!editingRow && (
+                                            <div class="relative mb-6 sm:mb-8" ref={dropdownRef}>
+                                                <div class="relative">
+                                                    <input type="text" class="w-full rounded-xl sm:rounded-2xl px-5 py-3.5 sm:py-4 pl-12 sm:pl-14 text-sm font-bold transition-all outline-none text-white" placeholder="Cari Pelajar..." value={searchQuery} onChange={(e)=>{setSearchQuery(e.target.value); setIsDropdownOpen(true);}} onFocus={()=>setIsDropdownOpen(true)}/>
+                                                    <i class="fas fa-search absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 text-slate-400"></i>
                                                 </div>
-                                                <div className="text-[10px] sm:text-xs text-slate-500 mt-1 block truncate font-mono">
-                                                    ID/KP: <span className="font-semibold text-slate-700">{sData.kp || sData.id}</span> • Kelas: {sData.kelas}
+                                                {isDropdownOpen && filteredStudents.length > 0 && (
+                                                    <div class="absolute w-full mt-2 glass-card rounded-2xl shadow-2xl border border-white/20 overflow-hidden z-50">
+                                                        {filteredStudents.map((r, i) => {
+                                                            const s = extractStudentData(r);
+                                                            return (
+                                                                <button key={i} onClick={()=>handleSelect(r)} class="w-full px-5 py-3.5 text-left active:bg-white/10 flex flex-col border-b border-white/5 last:border-0">
+                                                                    <span class="text-xs sm:text-sm font-black text-white uppercase truncate">{s.nama}</span>
+                                                                    <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">{s.tingkatan} {s.kelas} • {s.kp}</span>
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        <form onSubmit={handleSave} class="space-y-5 sm:space-y-6">
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div class="sm:col-span-2">
+                                                    <label class="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Nama Penuh Murid</label>
+                                                    <input required type="text" class="w-full rounded-xl sm:rounded-2xl px-4 py-3.5 sm:py-4 text-sm font-bold uppercase" value={formData.nama} onChange={(e)=>setFormData({...formData, nama: e.target.value})}/>
+                                                </div>
+                                                <div>
+                                                    <label class="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">No. Pengenalan (IC)</label>
+                                                    <input type="text" class="w-full rounded-xl sm:rounded-2xl px-4 py-3.5 sm:py-4 text-sm font-bold font-mono" value={formData.kp} onChange={(e)=>setFormData({...formData, kp: e.target.value})}/>
+                                                </div>
+                                                <div>
+                                                    <label class="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Nama Kelas</label>
+                                                    <input type="text" class="w-full rounded-xl sm:rounded-2xl px-4 py-3.5 sm:py-4 text-sm font-bold" value={formData.kelas} onChange={(e)=>setFormData({...formData, kelas: e.target.value})}/>
                                                 </div>
                                             </div>
-                                        )})}
+                                            
+                                            <div>
+                                                <label class="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Acara / Pertandingan</label>
+                                                <input required type="text" class="w-full rounded-xl sm:rounded-2xl px-4 py-3.5 sm:py-4 text-sm font-bold uppercase" placeholder="Contoh: BOLA SEPAK" value={formData.acara} onChange={(e)=>setFormData({...formData, acara: e.target.value.toUpperCase()})}/>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Peringkat</label>
+                                                    <select required class="w-full rounded-xl sm:rounded-2xl px-4 py-3.5 sm:py-4 text-sm font-bold appearance-none uppercase" value={formData.peringkat} onChange={(e)=>setFormData({...formData, peringkat: e.target.value})}>
+                                                        <option value="">PILIH</option>
+                                                        {['SEKOLAH','ZON','DAERAH','NEGERI','KEBANGSAAN','ANTARABANGSA'].map(v=><option key={v} value={v}>{v}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label class="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Pencapaian</label>
+                                                    <select required class="w-full rounded-xl sm:rounded-2xl px-4 py-3.5 sm:py-4 text-sm font-bold appearance-none uppercase" value={formData.pencapaian} onChange={(e)=>setFormData({...formData, pencapaian: e.target.value})}>
+                                                        <option value="">PILIH</option>
+                                                        {['JOHAN','NAIB JOHAN','KETIGA','KEEMPAT','PENYERTAAN','EMAS','PERAK','GANGSA'].map(v=><option key={v} value={v}>{v}</option>)}
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="pt-4 sm:pt-6">
+                                                <button disabled={isSaving} type="submit" class="w-full btn-gradient text-white py-4 sm:py-5 rounded-2xl sm:rounded-[2rem] font-black text-sm tracking-wider flex items-center justify-center gap-3 shadow-xl">
+                                                    {isSaving ? <i class="fas fa-spinner fa-spin"></i> : <i class="fas fa-paper-plane"></i>}
+                                                    {editingRow ? 'KEMASKINI' : 'SIMPAN REKOD'}
+                                                </button>
+                                                {editingRow && (
+                                                    <button type="button" onClick={()=>{setEditingRow(null); setFormData(initialFormState);}} class="w-full mt-3 text-slate-400 font-bold text-[10px] hover:text-white transition-colors">BATALKAN</button>
+                                                )}
+                                            </div>
+                                        </form>
                                     </div>
-                                )}
-                                {isDropdownOpen && searchQuery.trim().length > 0 && filteredStudents.length === 0 && (
-                                    <div className="absolute z-[100] mt-1 sm:mt-2 w-full bg-red-50 text-red-600 shadow-xl rounded-md py-2 sm:py-3 px-3 text-xs sm:text-sm font-medium text-center border border-red-200">
-                                        Tiada padanan dijumpai untuk "{searchQuery}".
-                                    </div>
-                                )}
-                                </div>
-                            </div>
-                            )}
-                        </div>
-
-                        {/* Borang Utama */}
-                        <form onSubmit={handleSaveAndSync} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative z-10">
-                            <div className="bg-slate-100 px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-200 font-semibold text-slate-700 flex items-center text-sm sm:text-base">
-                            <i className="fas fa-user text-base sm:text-lg mr-2 text-slate-500"></i>
-                            Maklumat Pencapaian
-                            </div>
-                            
-                            <div className="p-4 sm:p-5 space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="sm:col-span-2">
-                                <label className="block text-xs sm:text-sm font-medium text-slate-700 mb-1">Nama Penuh *</label>
-                                <input type="text" name="nama" required value={formData.nama} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-md bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-slate-800 uppercase text-sm sm:text-base" />
-                                </div>
-                                <div>
-                                <label className="block text-xs sm:text-sm font-medium text-slate-700 mb-1">ID Murid</label>
-                                <input type="text" name="id" value={formData.id} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-md bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm sm:text-base" />
-                                </div>
-                                <div>
-                                <label className="block text-xs sm:text-sm font-medium text-slate-700 mb-1">No. Pengenalan</label>
-                                <input type="text" name="kp" value={formData.kp} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-md bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm sm:text-base" />
-                                </div>
-                                <div>
-                                <label className="block text-xs sm:text-sm font-medium text-slate-700 mb-1">Tingkatan</label>
-                                <input type="text" name="tingkatan" value={formData.tingkatan} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-md bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm sm:text-base" />
-                                </div>
-                                <div>
-                                <label className="block text-xs sm:text-sm font-medium text-slate-700 mb-1">Nama Kelas</label>
-                                <input type="text" name="kelas" value={formData.kelas} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-md bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm sm:text-base" />
-                                </div>
-                            </div>
-
-                            <hr className="my-4 border-slate-200" />
-
-                            <div className="space-y-4">
-                                <div>
-                                <label className="block text-xs sm:text-sm font-medium text-slate-700 mb-1">Nama Acara / Pertandingan *</label>
-                                <input type="text" name="acara" required value={formData.acara} onChange={handleChange} placeholder="Cth: Merentas Desa MSSD" className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm sm:text-base" />
-                                </div>
-                                
-                                <div>
-                                <label className="block text-xs sm:text-sm font-medium text-slate-700 mb-1">Peringkat *</label>
-                                <select name="peringkat" required value={formData.peringkat} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm sm:text-base">
-                                    <option value="">-- Sila Pilih --</option>
-                                    <option value="Sekolah">Sekolah</option>
-                                    <option value="Zon">Zon</option>
-                                    <option value="Daerah">Daerah</option>
-                                    <option value="Bahagian">Bahagian</option>
-                                    <option value="Negeri">Negeri</option>
-                                    <option value="Kebangsaan">Kebangsaan</option>
-                                    <option value="Antarabangsa">Antarabangsa</option>
-                                </select>
                                 </div>
 
-                                <div>
-                                <label className="block text-xs sm:text-sm font-medium text-slate-700 mb-1">Pencapaian *</label>
-                                <select name="pencapaian" required value={formData.pencapaian} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm sm:text-base">
-                                    <option value="">-- Sila Pilih --</option>
-                                    <option value="Johan">Johan</option>
-                                    <option value="Naib Johan">Naib Johan</option>
-                                    <option value="Tempat Ketiga">Tempat Ketiga</option>
-                                    <option value="Tempat Keempat">Tempat Keempat</option>
-                                    <option value="Tempat Kelima">Tempat Kelima</option>
-                                    <option value="Penyertaan">Penyertaan</option>
-                                    <option value="Emas">Pingat Emas</option>
-                                    <option value="Perak">Pingat Perak</option>
-                                    <option value="Gangsa">Pingat Gangsa</option>
-                                    <option value="Cemerlang">Cemerlang</option>
-                                </select>
-                                </div>
-                            </div>
-
-                            <div className="pt-4 flex flex-col sm:flex-row gap-3">
-                                <button 
-                                type="submit" 
-                                disabled={isSaving}
-                                className="flex-1 flex justify-center items-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-70 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                                >
-                                {isSaving ? (
-                                    <>
-                                    <i className="fas fa-spinner fa-spin text-base sm:text-lg mr-2"></i>
-                                    Menyimpan...
-                                    </>
-                                ) : (
-                                    <>
-                                    <i className="fas fa-save text-base sm:text-lg mr-2"></i>
-                                    {editingRow ? 'Kemaskini Rekod' : 'Simpan Rekod'}
-                                    </>
-                                )}
-                                </button>
-
-                                {editingRow && (
-                                <button
-                                    type="button"
-                                    disabled={isSaving}
-                                    onClick={() => {
-                                    setEditingRow(null);
-                                    setFormData(initialFormState);
-                                    }}
-                                    className="flex-1 flex justify-center items-center py-2.5 px-4 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors"
-                                >
-                                    Batal Edit
-                                </button>
-                                )}
-                            </div>
-                            </div>
-                        </form>
-                        </div>
-
-                        {/* Right Column - Data Table */}
-                        <div className="lg:col-span-8 print:col-span-12 relative z-0">
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full">
-                            <div className="bg-slate-100 px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-200 font-semibold text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden">
-                            <div className="flex items-center text-sm sm:text-base">
-                                <i className="fas fa-file-excel text-base sm:text-lg mr-2 text-slate-500"></i>
-                                Senarai Semua Rekod 
-                                <span className="ml-2 sm:ml-3 bg-blue-100 text-blue-800 text-xs py-0.5 px-2 sm:py-1 sm:px-2.5 rounded-full font-bold">
-                                {cloudRecords.length}
-                                </span>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2 print:hidden">
-                                <button 
-                                onClick={handlePrint}
-                                className="inline-flex items-center px-2.5 py-1.5 sm:px-3 sm:py-1.5 border border-slate-300 text-xs sm:text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 transition-colors"
-                                title="Cetak atau Simpan sebagai PDF"
-                                >
-                                <i className="fas fa-print mr-1.5"></i>
-                                Cetak
-                                </button>
-                                <button 
-                                onClick={handleExport}
-                                className="inline-flex items-center px-2.5 py-1.5 sm:px-3 sm:py-1.5 border border-slate-300 text-xs sm:text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 transition-colors"
-                                title="Muat turun keseluruhan data"
-                                >
-                                <i className="fas fa-download mr-1.5"></i>
-                                CSV
-                                </button>
-                                <button onClick={loadAllData} className="inline-flex items-center text-xs sm:text-sm border border-blue-200 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 font-medium transition-colors">
-                                    <i className="fas fa-sync-alt mr-1.5"></i> Segar Semula
-                                </button>
-                            </div>
-                            </div>
-
-                            <div className="overflow-x-auto flex-1 min-h-[300px] sm:min-h-[400px]">
-                            {displayRecords.length > 0 ? (
-                                <table className="min-w-full divide-y divide-slate-200">
-                                <thead className="bg-slate-50">
-                                    <tr>
-                                    <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">Nama & Kelas</th>
-                                    <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-medium text-slate-500 uppercase tracking-wider">Acara</th>
-                                    <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-left text-[10px] sm:text-xs font-medium text-slate-500 uppercase tracking-wider">Peringkat & Pencapaian</th>
-                                    <th scope="col" className="px-3 sm:px-4 py-2 sm:py-3 text-right text-[10px] sm:text-xs font-medium text-slate-500 uppercase tracking-wider print:hidden">Tindakan</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-slate-200">
-                                    {displayRecords.map((record, index) => (
-                                    <tr key={index} className={`${editingRow === record.sheetRow ? 'bg-yellow-50/50' : 'hover:bg-slate-50'} transition-colors`}>
-                                        <td className="px-3 sm:px-4 py-2 sm:py-3 max-w-[120px] sm:max-w-none">
-                                        <div className="text-xs sm:text-sm font-bold text-slate-900 uppercase truncate">{record.nama}</div>
-                                        <div className="text-[10px] sm:text-xs text-slate-500 truncate">{record.tingkatan} {record.kelas}</div>
-                                        </td>
-                                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-slate-700 min-w-[100px]">
-                                        {record.acara}
-                                        </td>
-                                        <td className="px-3 sm:px-4 py-2 sm:py-3">
-                                        <div className="flex flex-col items-start gap-1">
-                                            <span className="px-2 py-0.5 inline-flex text-[10px] sm:text-xs leading-4 sm:leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 whitespace-nowrap">
-                                                {record.peringkat}
-                                            </span>
-                                            <span className="text-[10px] sm:text-sm text-slate-700 font-medium whitespace-nowrap">
-                                                {record.pencapaian}
-                                            </span>
+                                {/* Table Column */}
+                                <div class="lg:col-span-8">
+                                    <div class="glass-card rounded-3xl sm:rounded-[2.5rem] overflow-hidden flex flex-col h-full border-none">
+                                        <div class="p-6 sm:p-8 border-b border-white/5 flex items-center justify-between print:hidden">
+                                            <h3 class="text-white font-black text-sm sm:text-lg flex items-center gap-3">
+                                                <span class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-brand-blue/20 text-brand-blue flex items-center justify-center"><i class="fas fa-list text-xs sm:text-sm"></i></span>
+                                                REKOD
+                                            </h3>
+                                            <div class="flex gap-2">
+                                                <button onClick={handleExport} class="w-9 h-9 sm:p-3 rounded-xl sm:rounded-2xl bg-white/5 text-slate-300 active:bg-emerald-500 transition-all flex items-center justify-center"><i class="fas fa-file-csv"></i></button>
+                                                <button onClick={() => window.print()} class="w-9 h-9 sm:p-3 rounded-xl sm:rounded-2xl bg-white/5 text-slate-300 active:bg-brand-blue transition-all flex items-center justify-center"><i class="fas fa-print"></i></button>
+                                            </div>
                                         </div>
-                                        </td>
-                                        <td className="px-3 sm:px-4 py-2 sm:py-3 text-right text-sm font-medium print:hidden align-middle">
-                                        <button onClick={() => handleEditClick(record)} className="text-blue-500 hover:text-blue-700 transition-colors p-1 sm:p-2 bg-blue-50 rounded-md hover:bg-blue-100" title="Kemaskini Rekod">
-                                            <i className="fas fa-edit text-sm sm:text-base"></i>
-                                        </button>
-                                        </td>
-                                    </tr>
-                                    ))}
-                                </tbody>
-                                </table>
-                            ) : (
-                                <div className="text-center py-12 sm:py-20 px-4">
-                                <i className="fas fa-trophy text-4xl sm:text-6xl text-slate-200 mb-3 sm:mb-4 block"></i>
-                                <h3 className="text-sm sm:text-base font-medium text-slate-900">Tiada rekod buat masa ini.</h3>
-                                <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">Sila cari murid dan isi borang di sebelah untuk mula merekod pencapaian kokurikulum sekolah.</p>
-                                </div>
-                            )}
-                            </div>
-                        </div>
-                        </div>
-                    </div>
-                    )}
 
-                    {/* PANDANGAN 2: DASHBOARD ANALISIS PENCAPAIAN */}
-                    {activeTab === 'analysis' && (
-                    <div className="space-y-6">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-3 sm:gap-4 print:hidden">
-                            <p className="text-xs sm:text-sm text-slate-500 w-full sm:w-auto">
-                                * Data di bawah merangkumi rekod awan dari Google Sheet.
-                            </p>
-                            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                                <button onClick={handlePrint} className="flex-1 sm:flex-none justify-center text-xs sm:text-sm border border-slate-300 px-3 py-2 sm:py-1.5 rounded-md text-slate-700 bg-white hover:bg-slate-50 flex items-center font-medium shadow-sm">
-                                    <i className="fas fa-print mr-1.5"></i> Cetak PDF
-                                </button>
-                                <button onClick={handleExport} className="flex-1 sm:flex-none justify-center text-xs sm:text-sm border border-slate-300 px-3 py-2 sm:py-1.5 rounded-md text-slate-700 bg-white hover:bg-slate-50 flex items-center font-medium shadow-sm">
-                                    <i className="fas fa-download mr-1.5"></i> Muat Turun CSV
-                                </button>
-                                <button onClick={loadAllData} className="flex-1 sm:flex-none justify-center text-xs sm:text-sm bg-blue-50 text-blue-600 border border-blue-200 px-3 py-2 sm:py-1.5 rounded-md hover:bg-blue-100 flex items-center font-medium shadow-sm">
-                                    <i className="fas fa-sync-alt mr-1.5"></i> Segar Semula
-                                </button>
-                            </div>
-                        </div>
-
-                        {!analysisStats ? (
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 sm:p-12 text-center">
-                            <i className="fas fa-chart-bar text-4xl sm:text-6xl text-slate-200 mb-3 sm:mb-4 block"></i>
-                            <h3 className="text-base sm:text-lg font-medium text-slate-900">Tiada Data Analisis</h3>
-                            <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-slate-500">Tiada sebarang data pencapaian dijumpai di dalam sistem atau Google Sheet anda.</p>
-                        </div>
-                        ) : (
-                        <>
-                            {/* Kad Rumusan (Summary Cards) */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 flex items-center">
-                                <div className="p-3 sm:p-4 bg-blue-50 rounded-lg mr-3 sm:mr-4 text-blue-600">
-                                <i className="fas fa-users text-2xl sm:text-3xl"></i>
-                                </div>
-                                <div>
-                                <p className="text-xs sm:text-sm font-medium text-slate-500">Jumlah Penyertaan</p>
-                                <h4 className="text-2xl sm:text-3xl font-bold text-slate-800">{analysisStats.totalRecords}</h4>
-                                </div>
-                            </div>
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 flex items-center">
-                                <div className="p-3 sm:p-4 bg-purple-50 rounded-lg mr-3 sm:mr-4 text-purple-600">
-                                <i className="fas fa-chart-line text-2xl sm:text-3xl"></i>
-                                </div>
-                                <div>
-                                <p className="text-xs sm:text-sm font-medium text-slate-500">Jumlah Acara Disertai</p>
-                                <h4 className="text-2xl sm:text-3xl font-bold text-slate-800">{analysisStats.totalAcara}</h4>
-                                </div>
-                            </div>
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 flex items-center sm:col-span-2 md:col-span-1">
-                                <div className="p-3 sm:p-4 bg-yellow-50 rounded-lg mr-3 sm:mr-4 text-yellow-600">
-                                <i className="fas fa-award text-2xl sm:text-3xl"></i>
-                                </div>
-                                <div>
-                                <p className="text-xs sm:text-sm font-medium text-slate-500">Peringkat Paling Aktif</p>
-                                <h4 className="text-xl sm:text-2xl font-bold text-slate-800 truncate max-w-[150px] sm:max-w-full">
-                                    {analysisStats.sortedPeringkat.length > 0 ? analysisStats.sortedPeringkat[0][0] : 'Tiada'}
-                                </h4>
-                                </div>
-                            </div>
-                            </div>
-
-                            {/* Graf Pecahan */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                            {/* Analisis Peringkat */}
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
-                                <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-4 sm:mb-6 flex items-center border-b pb-2 sm:pb-3">
-                                <i className="fas fa-chart-bar text-base sm:text-lg mr-2 text-slate-400"></i> Analisis Mengikut Peringkat
-                                </h3>
-                                <div className="space-y-4 sm:space-y-5">
-                                {analysisStats.sortedPeringkat.map(([name, count], index) => {
-                                    const percentage = (count / analysisStats.totalRecords) * 100;
-                                    return (
-                                    <div key={index}>
-                                        <div className="flex justify-between text-xs sm:text-sm mb-1.5">
-                                        <span className="font-semibold text-slate-700">{name}</span>
-                                        <span className="text-slate-500">{count} rekod ({percentage.toFixed(1)}%)</span>
-                                        </div>
-                                        <div className="w-full bg-slate-100 rounded-full h-2 sm:h-2.5">
-                                        <div className="bg-blue-500 h-2 sm:h-2.5 rounded-full transition-all duration-500" style={{ width: `${percentage}%` }}></div>
+                                        <div class="overflow-x-auto">
+                                            {displayRecords.length > 0 ? (
+                                                <table class="w-full text-left">
+                                                    <thead>
+                                                        <tr class="bg-slate-900/40 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                                                            <th class="px-5 sm:px-8 py-4 sm:py-5">Murid</th>
+                                                            <th class="px-5 sm:px-8 py-4 sm:py-5">Aktiviti</th>
+                                                            <th class="px-5 sm:px-8 py-4 sm:py-5 text-right print:hidden">Edit</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="divide-y divide-white/5">
+                                                        {displayRecords.map((r, i) => (
+                                                            <tr key={i} class="active:bg-white/5 group">
+                                                                <td class="px-5 sm:px-8 py-5 sm:py-6 max-w-[140px] sm:max-w-none">
+                                                                    <div class="font-black text-white text-xs sm:text-sm uppercase tracking-tight truncate">{r.nama}</div>
+                                                                    <div class="text-[9px] sm:text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest truncate">{r.tingkatan} {r.kelas}</div>
+                                                                </td>
+                                                                <td class="px-5 sm:px-8 py-5 sm:py-6">
+                                                                    <div class="text-[10px] sm:text-xs font-bold text-slate-200 mb-1.5 uppercase truncate max-w-[120px] sm:max-w-none">{r.acara}</div>
+                                                                    <div class="flex flex-wrap gap-1 sm:gap-2">
+                                                                        <span class="px-2 py-0.5 rounded-md bg-brand-blue/10 text-brand-blue text-[8px] sm:text-[9px] font-black uppercase tracking-tighter border border-brand-blue/20">{r.peringkat}</span>
+                                                                        <span class="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 text-[8px] sm:text-[9px] font-black uppercase tracking-tighter border border-emerald-400/20">{r.pencapaian}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td class="px-5 sm:px-8 py-5 sm:py-6 text-right print:hidden">
+                                                                    <button onClick={()=>handleEditClick(r)} class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/5 text-slate-400 active:text-white transition-all">
+                                                                        <i class="fas fa-edit text-xs"></i>
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            ) : (
+                                                <div class="py-20 text-center">
+                                                    <i class="fas fa-inbox text-3xl text-slate-700 mb-4 block"></i>
+                                                    <p class="text-slate-500 font-bold text-xs tracking-widest uppercase">Tiada data.</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                    );
-                                })}
                                 </div>
                             </div>
-
-                            {/* Analisis Pencapaian */}
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
-                                <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-4 sm:mb-6 flex items-center border-b pb-2 sm:pb-3">
-                                <i className="fas fa-trophy text-base sm:text-lg mr-2 text-slate-400"></i> Analisis Mengikut Pencapaian
-                                </h3>
-                                <div className="space-y-4 sm:space-y-5">
-                                {analysisStats.sortedPencapaian.map(([name, count], index) => {
-                                    const percentage = (count / analysisStats.totalRecords) * 100;
-                                    return (
-                                    <div key={index}>
-                                        <div className="flex justify-between text-xs sm:text-sm mb-1.5">
-                                        <span className="font-semibold text-slate-700">{name}</span>
-                                        <span className="text-slate-500">{count} rekod ({percentage.toFixed(1)}%)</span>
-                                        </div>
-                                        <div className="w-full bg-slate-100 rounded-full h-2 sm:h-2.5">
-                                        <div className="bg-emerald-500 h-2 sm:h-2.5 rounded-full transition-all duration-500" style={{ width: `${percentage}%` }}></div>
-                                        </div>
-                                    </div>
-                                    );
-                                })}
-                                </div>
-                            </div>
-                            </div>
-
-                            {/* Kedudukan Top (Acara & Murid) */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                            {/* Top Murid Aktif */}
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                                <div className="bg-slate-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200">
-                                <h3 className="text-base sm:text-lg font-bold text-slate-800 flex items-center">
-                                    <i className="fas fa-users text-base sm:text-lg mr-2 text-blue-600"></i> Murid Paling Aktif (Top 10)
-                                </h3>
-                                </div>
-                                <ul className="divide-y divide-slate-100">
-                                {analysisStats.sortedMurid.map(([namaKelas, count], index) => (
-                                    <li key={index} className="px-4 sm:px-6 py-2.5 sm:py-3.5 flex flex-wrap sm:flex-nowrap justify-between items-center hover:bg-slate-50 gap-2">
-                                    <div className="flex items-center w-full sm:w-auto">
-                                        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[10px] sm:text-xs font-bold mr-2 sm:mr-3 flex-shrink-0">
-                                        {index + 1}
-                                        </div>
-                                        <span className="text-xs sm:text-sm font-bold text-slate-700 uppercase truncate">{namaKelas}</span>
-                                    </div>
-                                    <span className="inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-blue-100 text-blue-800 whitespace-nowrap">
-                                        {count} Acara
-                                    </span>
-                                    </li>
-                                ))}
-                                </ul>
-                            </div>
-
-                            {/* Top Acara Aktif */}
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                                <div className="bg-slate-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200">
-                                <h3 className="text-base sm:text-lg font-bold text-slate-800 flex items-center">
-                                    <i className="fas fa-chart-line text-base sm:text-lg mr-2 text-purple-600"></i> Acara Paling Popular (Top 5)
-                                </h3>
-                                </div>
-                                <ul className="divide-y divide-slate-100">
-                                {analysisStats.sortedAcara.map(([namaAcara, count], index) => (
-                                    <li key={index} className="px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center hover:bg-slate-50 gap-2">
-                                    <span className="text-xs sm:text-sm font-semibold text-slate-700">{namaAcara}</span>
-                                    <span className="inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-purple-100 text-purple-800 whitespace-nowrap">
-                                        {count} Penyertaan
-                                    </span>
-                                    </li>
-                                ))}
-                                </ul>
-                            </div>
-                            </div>
-                        </>
                         )}
-                    </div>
-                    )}
-                </main>
+
+                        {activeTab === 'analysis' && stats && (
+                            <div class="space-y-6 sm:space-y-8 animate-in slide-in-from-bottom-6 duration-700">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                                    <div class="glass-card p-6 sm:p-8 rounded-[2rem] sm:rounded-[3rem] neon-border-blue flex flex-col items-center text-center">
+                                        <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl bg-brand-blue/20 flex items-center justify-center mb-4 sm:mb-6 text-brand-blue text-xl sm:text-2xl"><i class="fas fa-users"></i></div>
+                                        <span class="text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] sm:tracking-[0.3em] mb-1.5">Penyertaan</span>
+                                        <h4 class="text-3xl sm:text-4xl font-black text-white">{stats.total}</h4>
+                                    </div>
+                                    <div class="glass-card p-6 sm:p-8 rounded-[2rem] sm:rounded-[3rem] border-white/5 flex flex-col items-center text-center">
+                                        <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl bg-brand-yellow/10 flex items-center justify-center mb-4 sm:mb-6 text-brand-yellow text-xl sm:text-2xl"><i class="fas fa-trophy"></i></div>
+                                        <span class="text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] sm:tracking-[0.3em] mb-1.5">Acara</span>
+                                        <h4 class="text-3xl sm:text-4xl font-black text-white">{stats.acara}</h4>
+                                    </div>
+                                    <div class="glass-card p-6 sm:p-8 rounded-[2rem] sm:rounded-[3rem] border-white/5 flex flex-col items-center text-center">
+                                        <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl bg-emerald-500/10 flex items-center justify-center mb-4 sm:mb-6 text-emerald-400 text-xl sm:text-2xl"><i class="fas fa-star"></i></div>
+                                        <span class="text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] sm:tracking-[0.3em] mb-1.5">Top Peringkat</span>
+                                        <h4 class="text-base sm:text-xl font-black text-white truncate w-full uppercase">{stats.peringkat[0]?.[0]}</h4>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+                                    <div class="glass-card p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[3.5rem] border-none">
+                                        <h3 class="text-white font-black text-[10px] sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.3em] mb-8 sm:mb-10 flex items-center gap-3">
+                                            <i class="fas fa-chart-pie text-brand-blue"></i> Peringkat
+                                        </h3>
+                                        <div class="space-y-6 sm:space-y-8">
+                                            {stats.peringkat.map(([name, count], index) => {
+                                                const pct = (count / stats.total) * 100;
+                                                return (
+                                                    <div key={index} class="space-y-2 sm:space-y-3">
+                                                        <div class="flex justify-between items-center px-1">
+                                                            <span class="text-[10px] sm:text-xs font-black text-slate-300 uppercase">{name}</span>
+                                                            <span class="text-[10px] sm:text-xs font-black text-brand-blue">{count}</span>
+                                                        </div>
+                                                        <div class="w-full bg-slate-900 h-2 sm:h-3 rounded-full overflow-hidden">
+                                                            <div class="h-full rounded-full transition-all duration-1000 ease-out" style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #1FA3D1, #2dd4bf)' }}></div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    <div class="glass-card p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[3.5rem] border-none">
+                                        <h3 class="text-white font-black text-[10px] sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.3em] mb-8 sm:mb-10 flex items-center gap-3">
+                                            <i class="fas fa-medal text-brand-yellow"></i> Top Pelajar
+                                        </h3>
+                                        <div class="space-y-4 sm:space-y-5">
+                                            {stats.topStudents.map(([name, count], index) => (
+                                                <div key={index} class="flex items-center justify-between p-4 sm:p-5 bg-white/5 rounded-2xl sm:rounded-[2rem] border border-white/5">
+                                                    <div class="flex items-center gap-4 sm:gap-5">
+                                                        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-900 border border-white/10 flex items-center justify-center font-black text-brand-blue text-xs sm:text-sm">
+                                                            {index + 1}
+                                                        </div>
+                                                        <span class="text-[10px] sm:text-xs font-black text-slate-200 uppercase truncate max-w-[120px] sm:max-w-none">{name}</span>
+                                                    </div>
+                                                    <div class="px-3 sm:px-4 py-1.5 sm:py-2 bg-brand-blue/20 rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black text-brand-blue uppercase">
+                                                        {count} ACARA
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+
+                    {/* Navigation Bar Mobile - Always Shown for App Experience */}
+                    <nav class="sm:hidden glass-card fixed bottom-6 left-6 right-6 z-[100] h-16 rounded-3xl border-white/10 shadow-2xl flex items-center justify-around px-4">
+                        <button onClick={()=>setActiveTab('form')} class={`flex flex-col items-center gap-1 transition-all ${activeTab === 'form' ? 'text-brand-blue' : 'text-slate-500'}`}>
+                            <i class="fas fa-edit text-lg"></i>
+                            <span class="text-[8px] font-black uppercase">Utama</span>
+                        </button>
+                        <button onClick={loadAllData} class="w-12 h-12 -mt-10 btn-gradient text-white rounded-2xl shadow-xl border-4 border-dark-bg flex items-center justify-center">
+                            <i class={`fas fa-sync-alt text-sm ${loading ? 'fa-spin' : ''}`}></i>
+                        </button>
+                        <button onClick={()=>setActiveTab('analysis')} class={`flex flex-col items-center gap-1 transition-all ${activeTab === 'analysis' ? 'text-brand-blue' : 'text-slate-500'}`}>
+                            <i class="fas fa-chart-bar text-lg"></i>
+                            <span class="text-[8px] font-black uppercase">Data</span>
+                        </button>
+                    </nav>
                 </div>
             );
         }
